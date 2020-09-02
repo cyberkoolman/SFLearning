@@ -18,7 +18,9 @@ namespace UserActor.Interfaces
     {
         Task AddToBasket(Guid productId, int quantity);
 
-        Task<Dictionary<Guid, int>> GetBasket();
+        // Should not use complex type
+        // Task<Dictionary<Guid, int>> GetBasket();
+        Task<BasketItem[]> GetBasket();
 
         Task ClearBasket();
     }
