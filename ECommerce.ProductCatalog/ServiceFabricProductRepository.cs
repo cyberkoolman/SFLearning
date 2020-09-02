@@ -11,19 +11,19 @@ namespace ECommerce.ProductCatalog
 {
     class ServiceFabricProductRepository : IProductRepository
     {
-        private readonly IReliableStateManager _stateManger;
+        private readonly IReliableStateManager _stateManager;
 
         public ServiceFabricProductRepository(IReliableStateManager stateManager)
         {
-            _stateManger = stateManager;
+            _stateManager = stateManager;
         }
 
         public async Task AddProduct(Product product)
         {
-            IReliableDictionary<Guid, Product> products = await _stateManger
+            IReliableDictionary<Guid, Product> products = await _stateManager
                 .GetOrAddAsync<IReliableDictionary<Guid, Product>>("products");
 
-            using (ITransaction tx = _stateManger.CreateTransaction())
+            using (ITransaction tx = _stateManager.CreateTransaction())
             {
                 await products.GetOrAddAsync(tx, product.Id, product);
                 await tx.CommitAsync();
@@ -32,11 +32,11 @@ namespace ECommerce.ProductCatalog
 
         public async Task<IEnumerable<Product>> GetAllProducts()
         {
-            IReliableDictionary<Guid, Product> products = await _stateManger
+            IReliableDictionary<Guid, Product> products = await _stateManager
                 .GetOrAddAsync<IReliableDictionary<Guid, Product>>("products");
             var result = new List<Product>();
 
-            using (ITransaction tx = _stateManger.CreateTransaction())
+            using (ITransaction tx = _stateManager.CreateTransaction())
             {
                 Microsoft.ServiceFabric.Data.IAsyncEnumerable<KeyValuePair<Guid, Product>> allProducts =
                     await products.CreateEnumerableAsync(tx, EnumerationMode.Unordered);
@@ -51,6 +51,18 @@ namespace ECommerce.ProductCatalog
                 }
             }
             return result;
+        }
+
+        public async Task<Product> GetProduct(Guid productId)
+        {
+            IReliableDictionary<Guid, Product> products = await _stateManager.GetOrAddAsync<IReliableDictionary<Guid, Product>>("products");
+
+            using (ITransaction tx = _stateManager.CreateTransaction())
+            {
+                ConditionalValue<Product> product = await products.TryGetValueAsync(tx, productId);
+
+                return product.HasValue ? product.Value : null;
+            }
         }
     }
 }

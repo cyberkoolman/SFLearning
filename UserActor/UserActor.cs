@@ -81,7 +81,7 @@ namespace UserActor
             // Any serializable object can be saved in the StateManager.
             // For more information, see https://aka.ms/servicefabricactorsstateserialization
 
-            return this.StateManager.TryAddStateAsync("00000000-0000-0000-0000-000000000000", 0);
+            return Task.FromResult(true);
         }
     }
 }
